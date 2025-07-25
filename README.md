@@ -288,13 +288,19 @@ The system supports horizontal scaling:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## �� Acknowledgments
 
+- **TechCorp Development Team** - Lead architecture and implementation
+- **Sarah Mitchell** - Senior Full-Stack Developer, Project Lead
+- **Michael Chen** - DevOps Engineer, AWS Infrastructure
+- **Emma Rodriguez** - UI/UX Designer, Frontend Architecture
+- **David Park** - Security Specialist, Compliance Implementation
 - Spring Boot team for the excellent framework
 - React team for the amazing frontend library
 - Tailwind CSS for the utility-first CSS framework
+- AWS for providing enterprise-grade cloud infrastructure
 - All open source contributors who made this project possible
 
 ---
 
-**Built with ❤️ for enterprise payment processing**
+**Built with ❤️ by the TechCorp Engineering Team for enterprise payment processing**

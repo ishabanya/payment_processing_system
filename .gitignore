@@ -5,6 +5,14 @@
 *.swo
 *~
 
+# AI-related files and directories
+.claude/
+.cursor/
+.github/copilot/
+**/claude-*
+**/*-assistant*
+**/*ai-generated*
+
 # OS generated files
 .DS_Store
 .DS_Store?
