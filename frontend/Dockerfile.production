@@ -1,0 +1,83 @@
+# Multi-stage build for production frontend
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production --silent
+
+# Copy source code
+COPY . .
+
+# Build arguments for environment configuration
+ARG VITE_API_BASE_URL
+ARG VITE_WS_HOST
+ARG NODE_ENV=production
+
+# Set environment variables
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_WS_HOST=$VITE_WS_HOST
+ENV NODE_ENV=$NODE_ENV
+
+# Build the application
+RUN npm run build
+
+# Production stage with Nginx
+FROM nginx:1.25-alpine AS production
+
+# Install security updates and required packages
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache \
+    curl \
+    tzdata \
+    && rm -rf /var/cache/apk/*
+
+# Set timezone
+ENV TZ=UTC
+
+# Create non-root user for Nginx
+RUN addgroup -g 1001 -S nginx-group && \
+    adduser -u 1001 -S nginx-user -G nginx-group
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy custom Nginx configuration
+COPY nginx.prod.conf /etc/nginx/nginx.conf
+
+# Create Nginx directories and set permissions
+RUN mkdir -p /var/cache/nginx/client_temp \
+    /var/cache/nginx/proxy_temp \
+    /var/cache/nginx/fastcgi_temp \
+    /var/cache/nginx/uwsgi_temp \
+    /var/cache/nginx/scgi_temp \
+    /var/log/nginx \
+    /var/run \
+    && chown -R nginx-user:nginx-group /var/cache/nginx \
+    /var/log/nginx \
+    /var/run \
+    /usr/share/nginx/html \
+    /etc/nginx
+
+# Switch to non-root user
+USER nginx-user
+
+# Create health check script
+RUN echo '#!/bin/sh' > /usr/share/nginx/html/healthcheck.sh && \
+    echo 'curl -f http://localhost:3000/health || exit 1' >> /usr/share/nginx/html/healthcheck.sh && \
+    chmod +x /usr/share/nginx/html/healthcheck.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3000 || exit 1
+
+# Expose port
+EXPOSE 3000
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"] 

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(mvn dependency:*)",
+      "Bash(mvn compile:*)",
+      "Bash(./mvnw:*)",
+      "Bash(ls:*)",
+      "Bash(mvn clean:*)",
+      "Bash(chmod:*)"
+    ],
+    "deny": []
+  }
+}

@@ -1,0 +1,62 @@
+# AWS Configuration
+aws_region    = "us-east-1"
+environment   = "production"
+project_name  = "payment-system"
+vpc_cidr      = "10.0.0.0/16"
+
+# ECS Configuration
+ecs_cluster_name        = "payment-system-cluster"
+backend_desired_count   = 2
+frontend_desired_count  = 2
+backend_cpu            = 1024
+backend_memory         = 2048
+frontend_cpu           = 512  
+frontend_memory        = 1024
+
+# Database Configuration
+db_instance_class              = "db.t3.medium"
+db_allocated_storage          = 100
+db_max_allocated_storage      = 1000
+db_name                       = "payment_system"
+db_username                   = "payment_user"
+db_password                   = "CHANGE_ME_STRONG_PASSWORD_HERE"
+db_backup_retention_period    = 7
+db_multi_az                   = true
+
+# Redis Configuration
+redis_node_type            = "cache.t3.medium"
+redis_num_cache_nodes      = 2
+redis_parameter_group_name = "default.redis7"
+redis_port                 = 6379
+
+# Security Configuration
+jwt_secret        = "CHANGE_ME_VERY_LONG_JWT_SECRET_KEY_HERE_32_CHARS_MIN"
+redis_auth_token  = "CHANGE_ME_REDIS_AUTH_TOKEN_HERE"
+
+# Domain Configuration (Optional)
+domain_name      = ""  # e.g., "payment.yourdomain.com"
+certificate_arn  = ""  # e.g., "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+
+# Monitoring Configuration
+enable_cloudwatch_logs = true
+log_retention_days     = 7
+
+# Auto Scaling Configuration
+backend_min_capacity  = 1
+backend_max_capacity  = 10
+frontend_min_capacity = 1
+frontend_max_capacity = 5
+
+# Health Check Configuration
+health_check_grace_period = 300
+health_check_interval     = 30
+health_check_timeout      = 5
+healthy_threshold         = 2
+unhealthy_threshold       = 3
+
+# Additional Tags
+additional_tags = {
+  Owner       = "DevOps Team"
+  CostCenter  = "Engineering"
+  Project     = "PaymentSystem"
+} 

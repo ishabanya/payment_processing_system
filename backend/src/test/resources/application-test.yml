@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: payment-system-test
+  
+  datasource:
+    url: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+    defer-datasource-initialization: true
+  
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:test-data.sql
+  
+  flyway:
+    enabled: false
+  
+  cache:
+    type: simple
+  
+  security:
+    jwt:
+      secret: testSecretKey123456789012345678901234567890
+      expiration: 3600000
+      refresh-expiration: 7200000
+
+logging:
+  level:
+    com.enterprise.payment: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+payment:
+  security:
+    rate-limit:
+      requests-per-minute: 1000
+      burst-capacity: 100
+  
+  encryption:
+    algorithm: AES/GCM/NoPadding
+    key-length: 256
