@@ -9,7 +9,7 @@ import { useAuthCheck } from '../../hooks/useAuthCheck';
  * Handles the authentication flow and provides a consistent layout
  * for authenticated routes. Includes loading states and error handling.
  * 
- * @author Emma Rodriguez - Frontend Team Lead
+ * @author ishabanya
  * @since 2024-07-20
  */
 const AuthLayout: React.FC = () => {
