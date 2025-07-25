@@ -290,7 +290,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **ishabanya** - Developer and Project Creator
+- **Y Shabanya Kishore** - Developer and Project Creator (yadaginishabanya@gmail.com)
 - Spring Boot team for the excellent framework
 - React team for the amazing frontend library
 - Tailwind CSS for the utility-first CSS framework
@@ -299,4 +299,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Built with ❤️ by ishabanya for enterprise payment processing**
+**Built with ❤️ by Y Shabanya Kishore for enterprise payment processing**

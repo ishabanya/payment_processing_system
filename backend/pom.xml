@@ -17,6 +17,17 @@
     <name>Enterprise Payment Processing System</name>
     <description>Enterprise-grade payment processing system with beautiful frontend</description>
 
+    <developers>
+        <developer>
+            <name>Y Shabanya Kishore</name>
+            <email>yadaginishabanya@gmail.com</email>
+            <roles>
+                <role>Developer</role>
+                <role>Project Creator</role>
+            </roles>
+        </developer>
+    </developers>
+
     <properties>
         <java.version>17</java.version>
         <spring-cloud.version>2023.0.0</spring-cloud.version>

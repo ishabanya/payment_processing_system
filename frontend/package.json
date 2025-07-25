@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "author": {
+    "name": "Y Shabanya Kishore",
+    "email": "yadaginishabanya@gmail.com"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

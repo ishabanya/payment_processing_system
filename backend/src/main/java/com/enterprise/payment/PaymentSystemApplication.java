@@ -1,7 +1,7 @@
 /**
  * Enterprise Payment Processing System
  * 
- * @author ishabanya
+ * @author Y Shabanya Kishore (yadaginishabanya@gmail.com)
  * @version 1.0.0
  * @since 2024-07-26
  * 
