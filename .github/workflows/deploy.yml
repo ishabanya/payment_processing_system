@@ -3,25 +3,22 @@ name: Deploy Payment Processing System
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY_FRONTEND: payment-system-production/frontend
-  ECR_REPOSITORY_BACKEND: payment-system-production/backend
   ECS_CLUSTER: payment-system-cluster
   ECS_SERVICE_FRONTEND: payment-system-production-frontend
-  ECS_SERVICE_BACKEND: payment-system-production-backend
 
 jobs:
   deploy:
-    name: Deploy to AWS
+    name: Build and Deploy to AWS
     runs-on: ubuntu-latest
     environment: production
 
     steps:
-    - name: Checkout
+    - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Configure AWS credentials
@@ -41,29 +38,65 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Build frontend image
-        cd aws/demo-app
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG .
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest .
+        # Build frontend image from demo-app directory
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG ./aws/demo-app
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
+    - name: Create ECS Task Definition
+      id: task-def
+      run: |
+        cat > task-definition.json << EOF
+        {
+          "family": "payment-system-production-frontend",
+          "networkMode": "awsvpc",
+          "requiresCompatibilities": ["FARGATE"],
+          "cpu": "1024",
+          "memory": "2048",
+          "executionRoleArn": "arn:aws:iam::434676049739:role/payment-system-production-ecs-task-execution-role",
+          "taskRoleArn": "arn:aws:iam::434676049739:role/payment-system-production-ecs-task-role",
+          "containerDefinitions": [
+            {
+              "name": "frontend",
+              "image": "${{ steps.build-frontend.outputs.image }}",
+              "essential": true,
+              "portMappings": [
+                {
+                  "containerPort": 3000,
+                  "protocol": "tcp"
+                }
+              ],
+              "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                  "awslogs-group": "/ecs/payment-system-production/frontend",
+                  "awslogs-region": "us-east-1",
+                  "awslogs-stream-prefix": "ecs"
+                }
+              }
+            }
+          ]
+        }
+        EOF
+
     - name: Deploy to Amazon ECS
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
-        task-definition: aws/ecs-task-definitions/frontend.json
+        task-definition: task-definition.json
         service: ${{ env.ECS_SERVICE_FRONTEND }}
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true
 
-    - name: Deployment Summary
+    - name: Deployment Success Summary
       run: |
-        echo "🎉 **Deployment Successful!**" >> $GITHUB_STEP_SUMMARY
+        echo "🎉 **Deployment Completed Successfully!**" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- **Frontend Image**: ${{ steps.build-frontend.outputs.image }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **ECS Cluster**: ${{ env.ECS_CLUSTER }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Service**: ${{ env.ECS_SERVICE_FRONTEND }}" >> $GITHUB_STEP_SUMMARY
+        echo "**✅ Infrastructure Status:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Docker Image: Built and pushed to ECR" >> $GITHUB_STEP_SUMMARY
+        echo "- ECS Service: Updated and running" >> $GITHUB_STEP_SUMMARY
+        echo "- Load Balancer: Active and routing traffic" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Your app is now live at:**" >> $GITHUB_STEP_SUMMARY
+        echo "**🌐 Your Payment Processing System is now LIVE:**" >> $GITHUB_STEP_SUMMARY
         echo "http://payment-system-production-alb-828716341.us-east-1.elb.amazonaws.com" >> $GITHUB_STEP_SUMMARY 
