@@ -1,6 +1,6 @@
 package com.enterprise.payment.service;
 
-import com.enterprise.payment.dto.request.PaymentRequest;
+import com.enterprise.payment.dto.request.CreateCreatePaymentRequest;
 import com.enterprise.payment.dto.response.PaymentResponse;
 import com.enterprise.payment.entity.Account;
 import com.enterprise.payment.entity.Payment;
@@ -25,7 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -55,7 +55,7 @@ class PaymentServiceTest {
     private Account testAccount;
     private PaymentMethod testPaymentMethod;
     private Payment testPayment;
-    private PaymentRequest paymentRequest;
+    private CreatePaymentRequest paymentRequest;
 
     @BeforeEach
     void setUp() {
@@ -74,9 +74,9 @@ class PaymentServiceTest {
         testPaymentMethod = new PaymentMethod();
         testPaymentMethod.setId(1L);
         testPaymentMethod.setAccount(testAccount);
-        testPaymentMethod.setType(PaymentMethod.Type.CREDIT_CARD);
+        testPaymentMethod.setType(PaymentMethod.PaymentMethodType.CREDIT_CARD);
         testPaymentMethod.setProvider("Visa");
-        testPaymentMethod.setActive(true);
+        testPaymentMethod.setIsActive(true);
 
         testPayment = new Payment();
         testPayment.setId(1L);
@@ -86,10 +86,10 @@ class PaymentServiceTest {
         testPayment.setAmount(new BigDecimal("100.00"));
         testPayment.setCurrencyCode("USD");
         testPayment.setDescription("Test Payment");
-        testPayment.setStatus(Payment.Status.PENDING);
-        testPayment.setCreatedAt(LocalDateTime.now());
+        testPayment.setStatus(Payment.PaymentStatus.PENDING);
+        testPayment.setCreatedAt(OffsetDateTime.now());
 
-        paymentRequest = new PaymentRequest();
+        paymentRequest = new CreatePaymentRequest();
         paymentRequest.setPaymentMethodId(1L);
         paymentRequest.setAmount(new BigDecimal("100.00"));
         paymentRequest.setCurrencyCode("USD");
@@ -270,7 +270,7 @@ class PaymentServiceTest {
     @Test
     void cancelPayment_WithCompletedPayment_ShouldThrowPaymentProcessingException() {
         // Arrange
-        testPayment.setStatus(Payment.Status.COMPLETED);
+        testPayment.setStatus(Payment.PaymentStatus.COMPLETED);
         when(paymentRepository.findById(1L)).thenReturn(Optional.of(testPayment));
 
         // Act & Assert
@@ -285,7 +285,7 @@ class PaymentServiceTest {
     @Test
     void refundPayment_WithValidPayment_ShouldProcessRefund() {
         // Arrange
-        testPayment.setStatus(Payment.Status.COMPLETED);
+        testPayment.setStatus(Payment.PaymentStatus.COMPLETED);
         when(paymentRepository.findById(1L)).thenReturn(Optional.of(testPayment));
         when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
 

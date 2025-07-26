@@ -1,7 +1,6 @@
 package com.enterprise.payment.dto.response;
 
 import com.enterprise.payment.entity.Payment;
-import com.enterprise.payment.entity.Transaction;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -24,8 +23,11 @@ public class TransactionResponse {
     @JsonProperty("transactionReference")
     private String transactionReference;
 
+    @JsonProperty("paymentReference")
+    private String paymentReference;
+
     @JsonProperty("type")
-    private Transaction.TransactionType type;
+    private String type;
 
     @JsonProperty("amount")
     private BigDecimal amount;
@@ -33,8 +35,11 @@ public class TransactionResponse {
     @JsonProperty("currencyCode")
     private String currencyCode;
 
+    @JsonProperty("description")
+    private String description;
+
     @JsonProperty("status")
-    private Payment.PaymentStatus status;
+    private String status;
 
     @JsonProperty("gatewayTransactionId")
     private String gatewayTransactionId;
@@ -75,14 +80,16 @@ public class TransactionResponse {
     private Long processingTimeMs;
 
     // Factory method to create from Transaction entity
-    public static TransactionResponse fromEntity(Transaction transaction) {
+    public static TransactionResponse fromEntity(com.enterprise.payment.entity.Transaction transaction) {
         TransactionResponse response = new TransactionResponse();
         response.setId(transaction.getId());
         response.setTransactionReference(transaction.getTransactionReference());
-        response.setType(transaction.getType());
+        response.setPaymentReference(transaction.getPayment().getPaymentReference());
+        response.setType(transaction.getType().toString());
         response.setAmount(transaction.getAmount());
         response.setCurrencyCode(transaction.getCurrencyCode());
-        response.setStatus(transaction.getStatus());
+        response.setDescription(transaction.getDescription());
+        response.setStatus(transaction.getStatus().toString());
         response.setGatewayTransactionId(transaction.getGatewayTransactionId());
         response.setGatewayResponse(transaction.getGatewayResponse());
         response.setProcessingFee(transaction.getProcessingFee());
@@ -104,46 +111,6 @@ public class TransactionResponse {
             ).toMillis();
             response.setProcessingTimeMs(processingTime);
         }
-        
-        return response;
-    }
-
-    // Factory method with payment information
-    public static TransactionResponse fromEntityWithPayment(Transaction transaction) {
-        TransactionResponse response = fromEntity(transaction);
-        
-        if (transaction.getPayment() != null) {
-            PaymentSummary paymentSummary = new PaymentSummary();
-            paymentSummary.setId(transaction.getPayment().getId());
-            paymentSummary.setPaymentReference(transaction.getPayment().getPaymentReference());
-            paymentSummary.setAmount(transaction.getPayment().getAmount());
-            paymentSummary.setCurrencyCode(transaction.getPayment().getCurrencyCode());
-            paymentSummary.setStatus(transaction.getPayment().getStatus());
-            paymentSummary.setMerchantReference(transaction.getPayment().getMerchantReference());
-            response.setPayment(paymentSummary);
-        }
-        
-        return response;
-    }
-
-    // Factory method for minimal response (without sensitive gateway data)
-    public static TransactionResponse fromEntityMinimal(Transaction transaction) {
-        TransactionResponse response = new TransactionResponse();
-        response.setId(transaction.getId());
-        response.setTransactionReference(transaction.getTransactionReference());
-        response.setType(transaction.getType());
-        response.setAmount(transaction.getAmount());
-        response.setCurrencyCode(transaction.getCurrencyCode());
-        response.setStatus(transaction.getStatus());
-        response.setProcessingFee(transaction.getProcessingFee());
-        response.setNetAmount(transaction.getNetAmount());
-        response.setProcessedAt(transaction.getProcessedAt());
-        response.setCreatedAt(transaction.getCreatedAt());
-        
-        // Set computed fields
-        response.setIsSuccessful(transaction.isSuccessful());
-        response.setIsFailed(transaction.isFailed());
-        response.setIsPending(transaction.isPending());
         
         return response;
     }

@@ -31,6 +31,9 @@ public class CreatePaymentRequest {
     @JsonProperty("paymentMethodId")
     private Long paymentMethodId;
 
+    @JsonProperty("accountId")
+    private Long accountId;
+
     @Size(max = 255, message = "Merchant reference cannot exceed 255 characters")
     private String merchantReference;
 

@@ -1,5 +1,6 @@
 package com.enterprise.payment.repository;
 
+import com.enterprise.payment.entity.Account;
 import com.enterprise.payment.entity.PaymentMethod;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -113,4 +114,13 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, Lo
     List<Object[]> getDailyPaymentMethodCreationStatisticsByType(@Param("since") OffsetDateTime since);
     
     boolean existsByAccountIdAndIsDefaultAndIsActive(Long accountId, Boolean isDefault, Boolean isActive);
+    
+    // Additional methods needed by PaymentMethodService
+    Page<PaymentMethod> findByAccountAndIsActiveOrderByCreatedAtDesc(Account account, Boolean isActive, Pageable pageable);
+    
+    Page<PaymentMethod> findByTypeAndIsActiveOrderByCreatedAtDesc(PaymentMethod.PaymentMethodType type, Boolean isActive, Pageable pageable);
+    
+    Long countByAccountAndTypeAndIsActive(Account account, PaymentMethod.PaymentMethodType type, Boolean isActive);
+    
+    Long countByAccountAndIsActiveAndCreatedAtAfter(Account account, Boolean isActive, OffsetDateTime createdAfter);
 }

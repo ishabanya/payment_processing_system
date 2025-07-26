@@ -30,23 +30,11 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         log.warn("Unauthorized access attempt - Error ID: {}, Path: {}, Message: {}", 
                 errorId, request.getRequestURI(), authException.getMessage());
 
-        ErrorResponse error = new ErrorResponse(
-                errorId,
-                "UNAUTHORIZED",
-                "Authentication required",
-                OffsetDateTime.now(),
-                request.getRequestURI(),
-                null
-        );
+        ErrorResponse error = ErrorResponse.unauthorized("Authentication required");
+        error.setRequestId(errorId);
+        error.setPath(request.getRequestURI());
 
-        ApiResponse<Object> apiResponse = new ApiResponse<>(
-                false,
-                "Authentication required",
-                null,
-                error,
-                null,
-                null
-        );
+        ApiResponse<Object> apiResponse = ApiResponse.error("Authentication required");
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");

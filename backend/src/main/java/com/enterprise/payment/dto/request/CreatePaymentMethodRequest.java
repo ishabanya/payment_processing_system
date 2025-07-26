@@ -64,6 +64,16 @@ public class CreatePaymentMethodRequest {
     @Size(max = 50, message = "Wallet ID cannot exceed 50 characters")
     private String walletId;
 
+    // Account ID for associating payment method with account
+    private Long accountId;
+
+    // Card specific fields
+    @Size(max = 19, message = "Card number cannot exceed 19 characters")
+    private String cardNumber;
+
+    @Size(max = 4, message = "CVV cannot exceed 4 characters")
+    private String cvv;
+
     // Business validation methods
     public boolean isValidForType() {
         return switch (type) {

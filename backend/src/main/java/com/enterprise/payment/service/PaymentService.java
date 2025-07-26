@@ -60,8 +60,8 @@ public class PaymentService extends BaseService {
         
         validateCreatePaymentRequest(request);
         
-        Account account = accountRepository.findByAccountNumber(request.getAccountNumber())
-            .orElseThrow(() -> new AccountNotFoundException(request.getAccountNumber()));
+        Account account = accountRepository.findById(request.getAccountId())
+            .orElseThrow(() -> new AccountNotFoundException("Account not found with ID: " + request.getAccountId()));
             
         validateAccountStatus(account);
         
@@ -80,7 +80,7 @@ public class PaymentService extends BaseService {
         // Check if payment should be auto-approved based on risk score
         if (riskScore.compareTo(BigDecimal.valueOf(70)) > 0) {
             payment.setStatus(Payment.PaymentStatus.FAILED);
-            auditLog("PAYMENT_REJECTED", "PAYMENT", payment.getPaymentReference(), 
+            auditLog("PAYMENT_REJECTED", "PAYMENT", payment.getId(), 
                     "Payment rejected due to high risk score: " + riskScore);
         }
         
@@ -89,7 +89,7 @@ public class PaymentService extends BaseService {
         // Create status history
         createStatusHistory(payment, Payment.PaymentStatus.PENDING, "Payment created");
         
-        auditLog("PAYMENT_CREATED", "PAYMENT", payment.getPaymentReference(), 
+        auditLog("PAYMENT_CREATED", "PAYMENT", payment.getId(), 
                 "Payment created for amount: " + payment.getAmount());
         
         // Async processing
@@ -125,7 +125,7 @@ public class PaymentService extends BaseService {
         logMethodEntry("processPayment", paymentId);
         
         Payment payment = paymentRepository.findById(paymentId)
-            .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+            .orElseThrow(() -> new PaymentNotFoundException(paymentId.toString()));
             
         if (!payment.canBeProcessed()) {
             throw new PaymentProcessingException("Payment cannot be processed in current state: " + payment.getStatus());
@@ -152,7 +152,7 @@ public class PaymentService extends BaseService {
                 account.setBalance(account.getBalance().subtract(payment.getAmount()));
                 accountRepository.save(account);
                 
-                auditLog("PAYMENT_PROCESSED", "PAYMENT", payment.getPaymentReference(), 
+                auditLog("PAYMENT_PROCESSED", "PAYMENT", payment.getId(), 
                         "Payment processed successfully");
                 
                 // Send notifications
@@ -160,7 +160,7 @@ public class PaymentService extends BaseService {
                 webhookService.sendPaymentWebhook(payment, "payment.completed");
             } else {
                 updatePaymentStatus(payment, Payment.PaymentStatus.FAILED, "Payment processing failed");
-                auditLog("PAYMENT_FAILED", "PAYMENT", payment.getPaymentReference(), 
+                auditLog("PAYMENT_FAILED", "PAYMENT", payment.getId(), 
                         "Payment processing failed");
             }
             
@@ -202,7 +202,7 @@ public class PaymentService extends BaseService {
                 account.setBalance(account.getBalance().add(request.getAmount()));
                 accountRepository.save(account);
                 
-                auditLog("PAYMENT_REFUNDED", "PAYMENT", payment.getPaymentReference(), 
+                auditLog("PAYMENT_REFUNDED", "PAYMENT", payment.getId(), 
                         "Payment refunded amount: " + request.getAmount() + ", reason: " + request.getReason());
                 
                 // Send notifications
@@ -232,10 +232,10 @@ public class PaymentService extends BaseService {
         Payment payment = paymentRepository.findByPaymentReference(paymentReference)
             .orElseThrow(() -> new PaymentNotFoundException(paymentReference));
             
-        Payment.PaymentStatus newStatus = Payment.PaymentStatus.valueOf(request.getStatus());
+        Payment.PaymentStatus newStatus = request.getStatus();
         updatePaymentStatus(payment, newStatus, request.getReason());
         
-        auditLog("PAYMENT_STATUS_UPDATED", "PAYMENT", payment.getPaymentReference(), 
+        auditLog("PAYMENT_STATUS_UPDATED", "PAYMENT", payment.getId(), 
                 "Status updated to: " + newStatus + ", reason: " + request.getReason());
         
         PaymentResponse response = mapToPaymentResponse(payment);
@@ -267,7 +267,7 @@ public class PaymentService extends BaseService {
         Account account = accountRepository.findByAccountNumber(accountNumber)
             .orElseThrow(() -> new AccountNotFoundException(accountNumber));
             
-        Page<Payment> payments = paymentRepository.findByAccountOrderByCreatedAtDesc(account, pageable);
+        Page<Payment> payments = paymentRepository.findByAccountIdOrderByCreatedAtDesc(account.getId(), pageable);
         Page<PaymentResponse> response = payments.map(this::mapToPaymentResponse);
         
         logMethodExit("getPaymentsForAccount", response.getTotalElements());
@@ -303,7 +303,7 @@ public class PaymentService extends BaseService {
         
         updatePaymentStatus(payment, Payment.PaymentStatus.CANCELLED, reason);
         
-        auditLog("PAYMENT_CANCELLED", "PAYMENT", payment.getPaymentReference(), 
+        auditLog("PAYMENT_CANCELLED", "PAYMENT", payment.getId(), 
                 "Payment cancelled, reason: " + reason);
         
         // Send notifications
@@ -318,7 +318,7 @@ public class PaymentService extends BaseService {
     // Private helper methods
 
     private void validateCreatePaymentRequest(CreatePaymentRequest request) {
-        validateRequired(request.getAccountNumber(), "accountNumber");
+        validateRequired(request.getAccountId(), "accountId");
         validateRequired(request.getAmount(), "amount");
         validateRequired(request.getCurrencyCode(), "currencyCode");
         
@@ -361,7 +361,7 @@ public class PaymentService extends BaseService {
     private void createStatusHistory(Payment payment, Payment.PaymentStatus status, String reason) {
         PaymentStatusHistory history = new PaymentStatusHistory();
         history.setPayment(payment);
-        history.setStatus(status);
+        history.setToStatus(status);
         history.setReason(reason);
         history.setChangedBy(getCurrentUsername());
         history.setChangedAt(OffsetDateTime.now());
@@ -417,11 +417,12 @@ public class PaymentService extends BaseService {
         PaymentResponse response = new PaymentResponse();
         response.setId(payment.getId());
         response.setPaymentReference(payment.getPaymentReference());
-        response.setAccountNumber(payment.getAccount().getAccountNumber());
+        // Set account information - PaymentResponse doesn't have accountId or accountNumber field
+        // The account details are set via the account relationship when needed
         response.setAmount(payment.getAmount());
         response.setCurrencyCode(payment.getCurrencyCode());
         response.setDescription(payment.getDescription());
-        response.setStatus(payment.getStatus().toString());
+        response.setStatus(payment.getStatus());
         response.setMerchantReference(payment.getMerchantReference());
         response.setRiskScore(payment.getRiskScore());
         response.setProcessedAt(payment.getProcessedAt());

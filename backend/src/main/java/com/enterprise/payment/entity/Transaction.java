@@ -64,6 +64,10 @@ public class Transaction {
     @NotNull
     private Payment.PaymentStatus status;
 
+    @Column(name = "description", length = 500)
+    @Size(max = 500)
+    private String description;
+
     @Column(name = "gateway_transaction_id")
     @Size(max = 255)
     private String gatewayTransactionId;

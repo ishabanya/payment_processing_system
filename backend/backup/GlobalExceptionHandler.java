@@ -35,8 +35,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Payment not found - Error ID: {}, Message: {}", errorId, ex.getMessage());
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("PAYMENT_NOT_FOUND")
+                .message(ex.getMessage())
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("Payment not found: " + ex.getMessage()));
+                .body(ApiResponse.error(error, "Payment not found"));
     }
 
     @ExceptionHandler(PaymentProcessingException.class)
@@ -44,8 +52,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.error("Payment processing error - Error ID: {}, Message: {}", errorId, ex.getMessage(), ex);
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("PAYMENT_PROCESSING_ERROR")
+                .message(ex.getMessage())
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Payment processing failed: " + ex.getMessage()));
+                .body(ApiResponse.error(error, "Payment processing failed"));
     }
 
     @ExceptionHandler(InsufficientFundsException.class)
@@ -53,8 +69,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Insufficient funds - Error ID: {}, Message: {}", errorId, ex.getMessage());
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("INSUFFICIENT_FUNDS")
+                .message(ex.getMessage())
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Insufficient funds: " + ex.getMessage()));
+                .body(ApiResponse.error(error, "Insufficient funds"));
     }
 
     @ExceptionHandler(InvalidPaymentStatusException.class)
@@ -62,8 +86,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Invalid payment status - Error ID: {}, Message: {}", errorId, ex.getMessage());
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("INVALID_PAYMENT_STATUS")
+                .message(ex.getMessage())
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Invalid payment status: " + ex.getMessage()));
+                .body(ApiResponse.error(error, "Invalid payment status"));
     }
 
     @ExceptionHandler(AccountNotFoundException.class)
@@ -71,8 +103,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Account not found - Error ID: {}, Message: {}", errorId, ex.getMessage());
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("ACCOUNT_NOT_FOUND")
+                .message(ex.getMessage())
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("Account not found: " + ex.getMessage()));
+                .body(ApiResponse.error(error, "Account not found"));
     }
 
     @ExceptionHandler(UserNotFoundException.class)
@@ -80,8 +120,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("User not found - Error ID: {}, Message: {}", errorId, ex.getMessage());
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("USER_NOT_FOUND")
+                .message(ex.getMessage())
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("User not found: " + ex.getMessage()));
+                .body(ApiResponse.error(error, "User not found"));
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
@@ -89,8 +137,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Duplicate resource - Error ID: {}, Message: {}", errorId, ex.getMessage());
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("DUPLICATE_RESOURCE")
+                .message(ex.getMessage())
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error("Resource already exists: " + ex.getMessage()));
+                .body(ApiResponse.error(error, "Resource already exists"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -105,12 +161,17 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
         
-        String message = "Validation failed: " + errors.entrySet().stream()
-                .map(entry -> entry.getKey() + " - " + entry.getValue())
-                .collect(Collectors.joining(", "));
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("VALIDATION_ERROR")
+                .message("Invalid request parameters")
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .details(errors)
+                .build();
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(message));
+                .body(ApiResponse.error(error, "Validation failed"));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -125,12 +186,17 @@ public class GlobalExceptionHandler {
                     (existing, replacement) -> existing
                 ));
         
-        String message = "Data constraint violation: " + errors.entrySet().stream()
-                .map(entry -> entry.getKey() + " - " + entry.getValue())
-                .collect(Collectors.joining(", "));
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("CONSTRAINT_VIOLATION")
+                .message("Data constraint violation")
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .details(errors)
+                .build();
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(message));
+                .body(ApiResponse.error(error, "Constraint violation"));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -147,8 +213,16 @@ public class GlobalExceptionHandler {
             }
         }
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("DATA_INTEGRITY_VIOLATION")
+                .message(message)
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error(message));
+                .body(ApiResponse.error(error, "Data integrity violation"));
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -156,8 +230,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Authentication error - Error ID: {}, Message: {}", errorId, ex.getMessage());
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("AUTHENTICATION_ERROR")
+                .message("Authentication failed")
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("Authentication required"));
+                .body(ApiResponse.error(error, "Authentication required"));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
@@ -165,8 +247,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Bad credentials - Error ID: {}", errorId);
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("BAD_CREDENTIALS")
+                .message("Invalid username or password")
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("Invalid username or password"));
+                .body(ApiResponse.error(error, "Invalid credentials"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -174,8 +264,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Access denied - Error ID: {}, Message: {}", errorId, ex.getMessage());
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("ACCESS_DENIED")
+                .message("Access denied")
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error("Access denied"));
+                .body(ApiResponse.error(error, "Access denied"));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -183,8 +281,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Invalid JSON - Error ID: {}", errorId);
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("INVALID_JSON")
+                .message("Invalid JSON format")
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Invalid JSON format"));
+                .body(ApiResponse.error(error, "Invalid request format"));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -192,8 +298,16 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.warn("Type mismatch - Error ID: {}, Parameter: {}", errorId, ex.getName());
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("TYPE_MISMATCH")
+                .message(String.format("Invalid value for parameter '%s'", ex.getName()))
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(String.format("Invalid value for parameter '%s'", ex.getName())));
+                .body(ApiResponse.error(error, "Invalid parameter type"));
     }
 
     @ExceptionHandler(Exception.class)
@@ -201,7 +315,15 @@ public class GlobalExceptionHandler {
         String errorId = UUID.randomUUID().toString();
         log.error("Unexpected error - Error ID: {}", errorId, ex);
         
+        ErrorResponse error = ErrorResponse.builder()
+                .errorId(errorId)
+                .code("INTERNAL_SERVER_ERROR")
+                .message("An unexpected error occurred")
+                .timestamp(OffsetDateTime.now())
+                .path(request.getRequestURI())
+                .build();
+        
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("An unexpected error occurred"));
+                .body(ApiResponse.error(error, "Internal server error"));
     }
 }

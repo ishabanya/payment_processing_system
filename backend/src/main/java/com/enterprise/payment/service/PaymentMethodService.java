@@ -275,7 +275,8 @@ public class PaymentMethodService extends BaseService {
         validateRequired(request.getType(), "type");
         validateRequired(request.getProvider(), "provider");
         
-        if (request.getType() == PaymentMethod.PaymentMethodType.CARD) {
+        if (request.getType() == PaymentMethod.PaymentMethodType.CREDIT_CARD || 
+            request.getType() == PaymentMethod.PaymentMethodType.DEBIT_CARD) {
             validateRequired(request.getCardNumber(), "cardNumber");
             validateRequired(request.getExpiryMonth(), "expiryMonth");
             validateRequired(request.getExpiryYear(), "expiryYear");
@@ -300,7 +301,8 @@ public class PaymentMethodService extends BaseService {
         paymentMethod.setIsActive(true);
         
         // Handle sensitive data encryption
-        if (request.getType() == PaymentMethod.PaymentMethodType.CARD) {
+        if (request.getType() == PaymentMethod.PaymentMethodType.CREDIT_CARD || 
+            request.getType() == PaymentMethod.PaymentMethodType.DEBIT_CARD) {
             Map<String, String> sensitiveData = new HashMap<>();
             sensitiveData.put("cardNumber", request.getCardNumber());
             sensitiveData.put("cardholderName", request.getCardholderName());
@@ -387,14 +389,28 @@ public class PaymentMethodService extends BaseService {
     private PaymentMethodResponse mapToPaymentMethodResponse(PaymentMethod paymentMethod) {
         PaymentMethodResponse response = new PaymentMethodResponse();
         response.setId(paymentMethod.getId());
-        response.setAccountId(paymentMethod.getAccount().getId());
-        response.setType(paymentMethod.getType().toString());
+        response.setType(paymentMethod.getType()); // Keep enum type, not string
         response.setProvider(paymentMethod.getProvider());
+        response.setLastFourDigits(paymentMethod.getLastFourDigits());
         response.setMaskedDetails(paymentMethod.getMaskedDetails());
+        response.setExpiryMonth(paymentMethod.getExpiryMonth());
+        response.setExpiryYear(paymentMethod.getExpiryYear());
+        response.setIsDefault(paymentMethod.getIsDefault());
         response.setIsActive(paymentMethod.getIsActive());
-        response.setExpiresAt(paymentMethod.getExpiresAt());
+        response.setIsExpired(paymentMethod.isExpired());
         response.setCreatedAt(paymentMethod.getCreatedAt());
         response.setUpdatedAt(paymentMethod.getUpdatedAt());
+        
+        // Set account information
+        if (paymentMethod.getAccount() != null) {
+            PaymentMethodResponse.AccountSummary accountSummary = new PaymentMethodResponse.AccountSummary();
+            accountSummary.setId(paymentMethod.getAccount().getId());
+            accountSummary.setAccountNumber(paymentMethod.getAccount().getAccountNumber());
+            accountSummary.setAccountName(paymentMethod.getAccount().getAccountName());
+            accountSummary.setStatus(paymentMethod.getAccount().getStatus());
+            response.setAccount(accountSummary);
+        }
+        
         return response;
     }
 }

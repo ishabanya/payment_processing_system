@@ -23,6 +23,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     
     Page<Transaction> findByPaymentIdOrderByCreatedAtDesc(Long paymentId, Pageable pageable);
     
+    @Query("SELECT t FROM Transaction t WHERE t.payment = :payment ORDER BY t.createdAt DESC")
+    Page<Transaction> findByPaymentOrderByCreatedAtDesc(@Param("payment") com.enterprise.payment.entity.Payment payment, Pageable pageable);
+    
+    @Query("SELECT t FROM Transaction t WHERE t.payment.account = :account ORDER BY t.createdAt DESC")
+    Page<Transaction> findByPayment_AccountOrderByCreatedAtDesc(@Param("account") com.enterprise.payment.entity.Account account, Pageable pageable);
+    
+    @Query("SELECT t FROM Transaction t WHERE t.createdAt BETWEEN :startDate AND :endDate ORDER BY t.createdAt DESC")
+    Page<Transaction> findByCreatedAtBetweenOrderByCreatedAtDesc(@Param("startDate") OffsetDateTime startDate, @Param("endDate") OffsetDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.payment.account = :account")
+    long countByPayment_Account(@Param("account") com.enterprise.payment.entity.Account account);
+    
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.createdAt BETWEEN :startDate AND :endDate")
+    long countByCreatedAtBetween(@Param("startDate") OffsetDateTime startDate, @Param("endDate") OffsetDateTime endDate);
+    
     List<Transaction> findByType(Transaction.TransactionType type);
     
     Page<Transaction> findByTypeOrderByCreatedAtDesc(Transaction.TransactionType type, Pageable pageable);
@@ -128,4 +143,17 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     boolean existsByTransactionReference(String transactionReference);
     
     boolean existsByGatewayTransactionId(String gatewayTransactionId);
+    
+    // Additional methods for TransactionService
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.payment.account = :account AND t.type = :type")
+    Long countByPayment_AccountAndType(@Param("account") com.enterprise.payment.entity.Account account, @Param("type") Transaction.TransactionType type);
+    
+    @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.payment.account = :account")
+    BigDecimal sumAmountByPayment_Account(@Param("account") com.enterprise.payment.entity.Account account);
+    
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.payment.account = :account AND t.createdAt > :createdAt")
+    Long countByPayment_AccountAndCreatedAtAfter(@Param("account") com.enterprise.payment.entity.Account account, @Param("createdAt") OffsetDateTime createdAt);
+    
+    @Query("SELECT t FROM Transaction t WHERE t.payment.account = :account AND t.createdAt > :createdAt ORDER BY t.createdAt DESC")
+    List<Transaction> findByPayment_AccountAndCreatedAtAfterOrderByCreatedAtDesc(@Param("account") com.enterprise.payment.entity.Account account, @Param("createdAt") OffsetDateTime createdAt);
 }

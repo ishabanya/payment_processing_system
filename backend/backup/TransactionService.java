@@ -241,7 +241,7 @@ public class TransactionService extends BaseService {
         transaction.setAmount(amount);
         transaction.setCurrencyCode(payment.getCurrencyCode());
         transaction.setDescription(description);
-        transaction.setStatus(Payment.PaymentStatus.COMPLETED);
+        transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
         transaction.setProcessedAt(OffsetDateTime.now());
         transaction.setCreatedAt(OffsetDateTime.now());
         transaction.setUpdatedAt(OffsetDateTime.now());
@@ -263,28 +263,9 @@ public class TransactionService extends BaseService {
         response.setCurrencyCode(transaction.getCurrencyCode());
         response.setDescription(transaction.getDescription());
         response.setStatus(transaction.getStatus().toString());
-        response.setGatewayTransactionId(transaction.getGatewayTransactionId());
-        response.setGatewayResponse(transaction.getGatewayResponse());
-        response.setProcessingFee(transaction.getProcessingFee());
-        response.setNetAmount(transaction.getNetAmount());
         response.setProcessedAt(transaction.getProcessedAt());
         response.setCreatedAt(transaction.getCreatedAt());
         response.setUpdatedAt(transaction.getUpdatedAt());
-        
-        // Set computed fields
-        response.setIsSuccessful(transaction.isSuccessful());
-        response.setIsFailed(transaction.isFailed());
-        response.setIsPending(transaction.isPending());
-        
-        // Calculate processing time if processed
-        if (transaction.getProcessedAt() != null && transaction.getCreatedAt() != null) {
-            long processingTime = java.time.Duration.between(
-                transaction.getCreatedAt(), 
-                transaction.getProcessedAt()
-            ).toMillis();
-            response.setProcessingTimeMs(processingTime);
-        }
-        
         return response;
     }
 }

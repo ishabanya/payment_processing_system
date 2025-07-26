@@ -49,7 +49,7 @@ public class AccountService extends BaseService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("initialBalance", account.getBalance());
         
-        auditLog("ACCOUNT_CREATED", "ACCOUNT", account.getAccountNumber(), 
+        auditLog("ACCOUNT_CREATED", "ACCOUNT", account.getId(), 
                 "Account created with initial balance: " + account.getBalance(), metadata);
         
         AccountResponse response = mapToAccountResponse(account);
@@ -80,7 +80,7 @@ public class AccountService extends BaseService {
         logMethodEntry("getAccountById", accountId);
         
         Account account = accountRepository.findById(accountId)
-            .orElseThrow(() -> new AccountNotFoundException(accountId));
+            .orElseThrow(() -> AccountNotFoundException.byId(accountId));
             
         AccountResponse response = mapToAccountResponse(account);
         logMethodExit("getAccountById", response);
@@ -131,7 +131,7 @@ public class AccountService extends BaseService {
         
         account = accountRepository.save(account);
         
-        auditLog("ACCOUNT_STATUS_UPDATED", "ACCOUNT", account.getAccountNumber(), 
+        auditLog("ACCOUNT_STATUS_UPDATED", "ACCOUNT", account.getId(), 
                 String.format("Status updated from %s to %s", oldStatus, newStatus));
         
         log.info("Account status updated: {} from {} to {}", accountNumber, oldStatus, newStatus);
@@ -172,7 +172,7 @@ public class AccountService extends BaseService {
         metadata.put("creditAmount", amount);
         metadata.put("description", description);
         
-        auditLog("BALANCE_CREDITED", "ACCOUNT", account.getAccountNumber(), 
+        auditLog("BALANCE_CREDITED", "ACCOUNT", account.getId(), 
                 String.format("Balance credited: %s. Old: %s, New: %s", amount, oldBalance, newBalance), 
                 metadata);
         
@@ -220,7 +220,7 @@ public class AccountService extends BaseService {
         metadata.put("debitAmount", amount);
         metadata.put("description", description);
         
-        auditLog("BALANCE_DEBITED", "ACCOUNT", account.getAccountNumber(), 
+        auditLog("BALANCE_DEBITED", "ACCOUNT", account.getId(), 
                 String.format("Balance debited: %s. Old: %s, New: %s", amount, oldBalance, newBalance), 
                 metadata);
         
@@ -260,7 +260,11 @@ public class AccountService extends BaseService {
         metadata.put("amount", amount);
         metadata.put("description", description);
         
-        auditLog("FUNDS_TRANSFERRED", "TRANSFER", fromAccountNumber + "->" + toAccountNumber, 
+        // Get the account ID for audit logging
+        Account fromAccountEntity = accountRepository.findByAccountNumber(fromAccountNumber)
+            .orElseThrow(() -> AccountNotFoundException.byAccountNumber(fromAccountNumber));
+        
+        auditLog("FUNDS_TRANSFERRED", "TRANSFER", fromAccountEntity.getId(), 
                 String.format("Transferred %s from %s to %s", amount, fromAccountNumber, toAccountNumber), 
                 metadata);
         
@@ -324,7 +328,7 @@ public class AccountService extends BaseService {
         
         account = accountRepository.save(account);
         
-        auditLog("ACCOUNT_UPDATED", "ACCOUNT", account.getAccountNumber(), 
+        auditLog("ACCOUNT_UPDATED", "ACCOUNT", account.getId(), 
                 "Account information updated");
         
         AccountResponse response = mapToAccountResponse(account);
@@ -395,7 +399,7 @@ public class AccountService extends BaseService {
         response.setAccountName(account.getAccountName());
         response.setEmail(account.getEmail());
         response.setPhone(account.getPhone());
-        response.setStatus(account.getStatus().toString());
+        response.setStatus(account.getStatus());
         response.setBalance(account.getBalance());
         response.setCurrencyCode(account.getCurrencyCode());
         response.setCreatedAt(account.getCreatedAt());

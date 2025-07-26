@@ -66,7 +66,7 @@ sudo mv terraform /usr/local/bin/
 cd aws
 
 # Set environment variables
-export AWS_PROFILE=your-profile
+export AWS_PROFILE=shabanya
 export ENVIRONMENT=production
 
 # Run automated deployment

@@ -47,6 +47,9 @@ public class PaymentMethod {
     @NotBlank
     private String encryptedDetails;
 
+    @Column(name = "masked_details", length = 255)
+    private String maskedDetails;
+
     @Column(name = "last_four_digits", length = 4)
     @Size(max = 4)
     private String lastFourDigits;
@@ -59,6 +62,9 @@ public class PaymentMethod {
     @Column(name = "expiry_year")
     @Min(2024)
     private Integer expiryYear;
+
+    @Column(name = "expires_at")
+    private OffsetDateTime expiresAt;
 
     @Column(name = "is_default", nullable = false)
     @NotNull
@@ -93,6 +99,9 @@ public class PaymentMethod {
     }
 
     public String getMaskedDetails() {
+        if (maskedDetails != null) {
+            return maskedDetails;
+        }
         if (lastFourDigits != null) {
             return "**** **** **** " + lastFourDigits;
         }

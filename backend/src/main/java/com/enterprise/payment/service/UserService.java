@@ -15,6 +15,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,11 +32,25 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserService extends BaseService {
+public class UserService extends BaseService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+
+    /**
+     * Load user details for Spring Security authentication
+     */
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        logMethodEntry("loadUserByUsername", username);
+        
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+            
+        logMethodExit("loadUserByUsername", user.getUsername());
+        return user; // User entity implements UserDetails
+    }
 
     /**
      * Create a new user
@@ -46,9 +63,9 @@ public class UserService extends BaseService {
         validateUserUniqueness(request.getUsername(), request.getEmail());
         
         Account account = null;
-        if (request.getAccountNumber() != null) {
-            account = accountRepository.findByAccountNumber(request.getAccountNumber())
-                .orElseThrow(() -> new AccountNotFoundException(request.getAccountNumber()));
+        if (request.getAccountId() != null) {
+            account = accountRepository.findById(request.getAccountId())
+                .orElseThrow(() -> AccountNotFoundException.byId(request.getAccountId()));
         }
         
         User user = createUserEntity(request, account);
@@ -58,7 +75,7 @@ public class UserService extends BaseService {
         metadata.put("role", user.getRole());
         metadata.put("accountId", account != null ? account.getId() : null);
         
-        auditLog("USER_CREATED", "USER", user.getUsername(), 
+        auditLog("USER_CREATED", "USER", user.getId(), 
                 "User created with role: " + user.getRole(), metadata);
         
         UserResponse response = mapToUserResponse(user);
@@ -143,9 +160,9 @@ public class UserService extends BaseService {
         logMethodEntry("getUsersByAccount", accountNumber, pageable);
         
         Account account = accountRepository.findByAccountNumber(accountNumber)
-            .orElseThrow(() -> new AccountNotFoundException(accountNumber));
+            .orElseThrow(() -> AccountNotFoundException.byAccountNumber(accountNumber));
             
-        Page<User> users = userRepository.findByAccountOrderByCreatedAtDesc(account, pageable);
+        Page<User> users = userRepository.findByAccountIdOrderByCreatedAtDesc(account.getId(), pageable);
         Page<UserResponse> response = users.map(this::mapToUserResponse);
         
         logMethodExit("getUsersByAccount", response.getTotalElements());
@@ -175,7 +192,7 @@ public class UserService extends BaseService {
         
         user = userRepository.save(user);
         
-        auditLog("USER_STATUS_UPDATED", "USER", user.getUsername(), 
+        auditLog("USER_STATUS_UPDATED", "USER", user.getId(), 
                 String.format("Status updated from %s to %s", oldStatus, isActive));
         
         log.info("User status updated: {} from {} to {}", username, oldStatus, isActive);
@@ -202,7 +219,7 @@ public class UserService extends BaseService {
         
         user = userRepository.save(user);
         
-        auditLog("USER_ROLE_UPDATED", "USER", user.getUsername(), 
+        auditLog("USER_ROLE_UPDATED", "USER", user.getId(), 
                 String.format("Role updated from %s to %s", oldRole, newRole));
         
         log.info("User role updated: {} from {} to {}", username, oldRole, newRole);
@@ -232,7 +249,7 @@ public class UserService extends BaseService {
         
         userRepository.save(user);
         
-        auditLog("USER_PASSWORD_UPDATED", "USER", user.getUsername(), "Password updated");
+        auditLog("USER_PASSWORD_UPDATED", "USER", user.getId(), "Password updated");
         
         log.info("User password updated: {}", username);
         logMethodExit("updateUserPassword");
@@ -269,7 +286,7 @@ public class UserService extends BaseService {
         user.setUpdatedAt(OffsetDateTime.now());
         user = userRepository.save(user);
         
-        auditLog("USER_PROFILE_UPDATED", "USER", user.getUsername(), "Profile information updated");
+        auditLog("USER_PROFILE_UPDATED", "USER", user.getId(), "Profile information updated");
         
         UserResponse response = mapToUserResponse(user);
         logMethodExit("updateUserProfile", response);
@@ -295,7 +312,7 @@ public class UserService extends BaseService {
             user.setFailedLoginAttempts(0);
             user.setLockedUntil(null);
             
-            auditLog("USER_LOGIN_SUCCESS", "USER", user.getUsername(), "Successful login");
+            auditLog("USER_LOGIN_SUCCESS", "USER", user.getId(), "Successful login");
         } else {
             int failedAttempts = user.getFailedLoginAttempts() + 1;
             user.setFailedLoginAttempts(failedAttempts);
@@ -303,10 +320,10 @@ public class UserService extends BaseService {
             // Lock account after 5 failed attempts for 30 minutes
             if (failedAttempts >= 5) {
                 user.setLockedUntil(OffsetDateTime.now().plusMinutes(30));
-                auditLog("USER_ACCOUNT_LOCKED", "USER", user.getUsername(), 
+                auditLog("USER_ACCOUNT_LOCKED", "USER", user.getId(), 
                         "Account locked due to failed login attempts: " + failedAttempts);
             } else {
-                auditLog("USER_LOGIN_FAILED", "USER", user.getUsername(), 
+                auditLog("USER_LOGIN_FAILED", "USER", user.getId(), 
                         "Failed login attempt: " + failedAttempts);
             }
         }
@@ -348,7 +365,7 @@ public class UserService extends BaseService {
         
         user = userRepository.save(user);
         
-        auditLog("USER_ACCOUNT_UNLOCKED", "USER", user.getUsername(), "Account manually unlocked");
+        auditLog("USER_ACCOUNT_UNLOCKED", "USER", user.getId(), "Account manually unlocked");
         
         log.info("User account unlocked: {}", username);
         
@@ -373,7 +390,7 @@ public class UserService extends BaseService {
         
         userRepository.save(user);
         
-        auditLog("USER_DELETED", "USER", user.getUsername(), "User soft deleted");
+        auditLog("USER_DELETED", "USER", user.getId(), "User soft deleted");
         
         log.info("User soft deleted: {}", username);
         logMethodExit("deleteUser");
@@ -466,14 +483,25 @@ public class UserService extends BaseService {
         response.setFirstName(user.getFirstName());
         response.setLastName(user.getLastName());
         response.setFullName(user.getFullName());
-        response.setRole(user.getRole().toString());
-        response.setAccountNumber(user.getAccount() != null ? user.getAccount().getAccountNumber() : null);
+        response.setRole(user.getRole());
         response.setIsActive(user.getIsActive());
         response.setLastLogin(user.getLastLogin());
         response.setFailedLoginAttempts(user.getFailedLoginAttempts());
-        response.setIsLocked(!user.isAccountNonLocked());
+        response.setIsAccountLocked(!user.isAccountNonLocked());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
+        
+        // Set account information if available
+        if (user.getAccount() != null) {
+            UserResponse.AccountSummary accountSummary = new UserResponse.AccountSummary();
+            accountSummary.setId(user.getAccount().getId());
+            accountSummary.setAccountNumber(user.getAccount().getAccountNumber());
+            accountSummary.setAccountName(user.getAccount().getAccountName());
+            accountSummary.setStatus(user.getAccount().getStatus());
+            accountSummary.setCurrencyCode(user.getAccount().getCurrencyCode());
+            response.setAccount(accountSummary);
+        }
+        
         return response;
     }
 }

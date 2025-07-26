@@ -95,6 +95,13 @@ public class JwtService extends BaseService {
     }
 
     /**
+     * Extract username from token (alias for compatibility)
+     */
+    public String getUsernameFromToken(String token) {
+        return extractUsername(token);
+    }
+
+    /**
      * Extract user ID from token
      */
     public Long extractUserId(String token) {
@@ -229,7 +236,7 @@ public class JwtService extends BaseService {
      */
     public Claims extractAllClaims(String token) {
         try {
-            return Jwts.parserBuilder()
+            return Jwts.parser()
                     .setSigningKey(getSigningKey())
                     .build()
                     .parseClaimsJws(token)
@@ -264,7 +271,7 @@ public class JwtService extends BaseService {
                 .setSubject(subject)
                 .setIssuedAt(now)
                 .setExpiration(expirationDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .signWith(getSigningKey())
                 .compact();
     }
 

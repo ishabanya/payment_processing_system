@@ -12,7 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -37,7 +39,7 @@ public class WebhookService extends BaseService {
             try {
                 logMethodEntry("sendPaymentWebhook", payment.getPaymentReference(), eventType);
                 
-                List<Webhook> webhooks = webhookRepository.findByAccountAndIsActiveTrue(payment.getAccount());
+                List<Webhook> webhooks = webhookRepository.findActiveByAccountId(payment.getAccount().getId());
                 
                 for (Webhook webhook : webhooks) {
                     if (webhook.getEvents().contains(eventType)) {
@@ -66,9 +68,16 @@ public class WebhookService extends BaseService {
             WebhookDelivery delivery = new WebhookDelivery();
             delivery.setWebhook(webhook);
             delivery.setPayment(payment);
-            delivery.setEventType(eventType);
-            delivery.setUrl(webhook.getUrl());
-            delivery.setStatus(WebhookDelivery.DeliveryStatus.PENDING);
+            delivery.setEvent(eventType);
+            
+            // Create a simple payload with basic payment information
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("paymentId", payment.getId());
+            payload.put("paymentReference", payment.getPaymentReference());
+            payload.put("amount", payment.getAmount());
+            payload.put("status", payment.getStatus().toString());
+            payload.put("eventType", eventType);
+            delivery.setPayload(payload);
             
             webhookDeliveryRepository.save(delivery);
             

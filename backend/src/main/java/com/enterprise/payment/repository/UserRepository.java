@@ -21,6 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     List<User> findByAccountId(Long accountId);
     
+    Page<User> findByAccountIdOrderByCreatedAtDesc(Long accountId, Pageable pageable);
+    
     List<User> findByRole(User.UserRole role);
     
     Page<User> findByRoleOrderByCreatedAtDesc(User.UserRole role, Pageable pageable);
