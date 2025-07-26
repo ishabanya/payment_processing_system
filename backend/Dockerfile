@@ -1,5 +1,5 @@
 # Multi-stage build for Spring Boot application
-FROM eclipse-temurin:17-jdk-alpine AS builder
+FROM amazoncorretto:17-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -19,7 +19,7 @@ COPY src src
 RUN ./mvnw clean package -DskipTests -B
 
 # Production image
-FROM eclipse-temurin:17-jre-alpine
+FROM amazoncorretto:17-alpine
 
 # Install curl for health checks
 RUN apk add --no-cache curl
@@ -54,7 +54,7 @@ ENV JAVA_OPTS="-XX:+UseContainerSupport \
     -XX:+UseStringDeduplication \
     -XX:+OptimizeStringConcat \
     -Djava.security.egd=file:/dev/./urandom \
-    -Dspring.profiles.active=docker"
+    -Dspring.profiles.active=production"
 
 # Run application
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

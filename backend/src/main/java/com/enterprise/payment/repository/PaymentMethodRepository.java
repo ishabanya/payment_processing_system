@@ -123,4 +123,8 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, Lo
     Long countByAccountAndTypeAndIsActive(Account account, PaymentMethod.PaymentMethodType type, Boolean isActive);
     
     Long countByAccountAndIsActiveAndCreatedAtAfter(Account account, Boolean isActive, OffsetDateTime createdAfter);
+    
+    // Add missing method
+    @Query("SELECT COUNT(pm) FROM PaymentMethod pm WHERE pm.account = :account AND pm.isActive = :isActive")
+    Long countByAccountAndIsActive(@Param("account") Account account, @Param("isActive") Boolean isActive);
 }

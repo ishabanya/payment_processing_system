@@ -13,6 +13,10 @@ public class PaymentNotFoundException extends RuntimeException {
         return new PaymentNotFoundException("Payment not found with ID: " + paymentId);
     }
 
+    public static PaymentNotFoundException byId(Long paymentId) {
+        return new PaymentNotFoundException("Payment not found with ID: " + paymentId);
+    }
+
     public PaymentNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }

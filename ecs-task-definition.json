@@ -1,0 +1,30 @@
+{
+  "family": "payment-system-production-frontend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::434676049739:role/payment-system-production-ecs-task-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "434676049739.dkr.ecr.us-east-1.amazonaws.com/payment-system-production/frontend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/payment-system-frontend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+} 

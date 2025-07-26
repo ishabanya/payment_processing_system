@@ -44,7 +44,7 @@ public class PaymentMethodService extends BaseService {
         validateCreatePaymentMethodRequest(request);
         
         Account account = accountRepository.findById(request.getAccountId())
-            .orElseThrow(() -> new AccountNotFoundException(request.getAccountId()));
+            .orElseThrow(() -> AccountNotFoundException.byId(request.getAccountId()));
             
         validateAccountForPaymentMethod(account);
         
@@ -72,7 +72,7 @@ public class PaymentMethodService extends BaseService {
         logMethodEntry("getPaymentMethodById", paymentMethodId);
         
         PaymentMethod paymentMethod = paymentMethodRepository.findById(paymentMethodId)
-            .orElseThrow(() -> new PaymentNotFoundException(paymentMethodId));
+            .orElseThrow(() -> PaymentNotFoundException.byId(paymentMethodId));
             
         PaymentMethodResponse response = mapToPaymentMethodResponse(paymentMethod);
         logMethodExit("getPaymentMethodById", response);
@@ -86,7 +86,7 @@ public class PaymentMethodService extends BaseService {
         logMethodEntry("getPaymentMethodsForAccount", accountId, pageable);
         
         Account account = accountRepository.findById(accountId)
-            .orElseThrow(() -> new AccountNotFoundException(accountId));
+            .orElseThrow(() -> AccountNotFoundException.byId(accountId));
             
         Page<PaymentMethod> paymentMethods = paymentMethodRepository
             .findByAccountAndIsActiveOrderByCreatedAtDesc(account, true, pageable);
@@ -244,7 +244,7 @@ public class PaymentMethodService extends BaseService {
         logMethodEntry("getPaymentMethodStatistics", accountId);
         
         Account account = accountRepository.findById(accountId)
-            .orElseThrow(() -> new AccountNotFoundException(accountId));
+            .orElseThrow(() -> AccountNotFoundException.byId(accountId));
             
         Map<String, Object> stats = new HashMap<>();
         
