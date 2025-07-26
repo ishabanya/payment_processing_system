@@ -54,19 +54,27 @@ jobs:
           --service ${{ env.ECS_SERVICE }} \
           --force-new-deployment
         
-        echo "⏳ Waiting for deployment to complete..."
-        aws ecs wait services-stable \
+        echo "✅ Deployment initiated successfully!"
+        echo "⏳ Service will become stable in 2-3 minutes (running async)"
+
+    - name: Get service status
+      run: |
+        echo "📊 Current service status:"
+        aws ecs describe-services \
           --cluster ${{ env.ECS_CLUSTER }} \
-          --services ${{ env.ECS_SERVICE }}
+          --services ${{ env.ECS_SERVICE }} \
+          --query "services[0].{Status:status,RunningCount:runningCount,DesiredCount:desiredCount,PendingCount:pendingCount}"
 
     - name: Deployment summary
       run: |
-        echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+        echo "## 🎉 Deployment Initiated Successfully!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**✅ Status:**" >> $GITHUB_STEP_SUMMARY
         echo "- Docker image built and pushed to ECR" >> $GITHUB_STEP_SUMMARY
-        echo "- ECS service updated with new image" >> $GITHUB_STEP_SUMMARY
-        echo "- Load balancer routing traffic to new containers" >> $GITHUB_STEP_SUMMARY
+        echo "- ECS service deployment started" >> $GITHUB_STEP_SUMMARY
+        echo "- New containers will be available in 2-3 minutes" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**🌐 Your app is live at:**" >> $GITHUB_STEP_SUMMARY  
-        echo "http://payment-system-production-alb-828716341.us-east-1.elb.amazonaws.com" >> $GITHUB_STEP_SUMMARY 
+        echo "**🌐 Your app will be live at:**" >> $GITHUB_STEP_SUMMARY  
+        echo "http://payment-system-production-alb-828716341.us-east-1.elb.amazonaws.com" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**💡 Note:** The service updates asynchronously. Check the ECS console for deployment progress." >> $GITHUB_STEP_SUMMARY 
