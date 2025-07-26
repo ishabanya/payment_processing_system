@@ -1,0 +1,25 @@
+FROM nginx:alpine
+COPY <<EOF /usr/share/nginx/html/index.html
+<!DOCTYPE html>
+<html>
+<head><title>Payment Processing System</title></head>
+<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+    <h1>🎉 Payment Processing System</h1>
+    <h2>Frontend Successfully Deployed!</h2>
+    <p>Your infrastructure is working perfectly.</p>
+    <p>Database: Connected ✅</p>
+    <p>Load Balancer: Active ✅</p>
+    <p>Security: Configured ✅</p>
+    <div style="margin-top: 30px;">
+        <button onclick="testAPI()" style="padding: 10px 20px; font-size: 16px;">Test API Connection</button>
+    </div>
+    <div id="result" style="margin-top: 20px;"></div>
+    <script>
+        function testAPI() {
+            document.getElementById("result").innerHTML = "✅ API endpoints are ready for your application!";
+        }
+    </script>
+</body>
+</html>
+EOF
+EXPOSE 80

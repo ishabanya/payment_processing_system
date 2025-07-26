@@ -1,0 +1,43 @@
+{
+  "family": "payment-system-production-frontend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::434676049739:role/payment-system-production-ecs-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::434676049739:role/payment-system-production-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "434676049739.dkr.ecr.us-east-1.amazonaws.com/payment-system-production/frontend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "VITE_API_BASE_URL",
+          "value": "https://payment-system-production-alb-828716341.us-east-1.elb.amazonaws.com/api/v1"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/payment-system-production/frontend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      }
+    }
+  ]
+} 

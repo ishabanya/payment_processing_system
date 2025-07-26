@@ -60,10 +60,16 @@ setup_terraform_backend() {
     # Create S3 bucket for state
     if ! aws s3api head-bucket --bucket "$bucket_name" 2>/dev/null; then
         echo "Creating S3 bucket for Terraform state..."
-        aws s3api create-bucket \
-            --bucket "$bucket_name" \
-            --region "$AWS_REGION" \
-            --create-bucket-configuration LocationConstraint="$AWS_REGION"
+        if [ "$AWS_REGION" = "us-east-1" ]; then
+            aws s3api create-bucket \
+                --bucket "$bucket_name" \
+                --region "$AWS_REGION"
+        else
+            aws s3api create-bucket \
+                --bucket "$bucket_name" \
+                --region "$AWS_REGION" \
+                --create-bucket-configuration LocationConstraint="$AWS_REGION"
+        fi
         
         # Enable versioning
         aws s3api put-bucket-versioning \

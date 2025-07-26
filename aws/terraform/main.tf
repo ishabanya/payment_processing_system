@@ -6,13 +6,6 @@ terraform {
       version = "~> 5.0"
     }
   }
-  
-  backend "s3" {
-    # Configure this with your S3 bucket for state storage
-    # bucket = "your-terraform-state-bucket"
-    # key    = "payment-system/terraform.tfstate"
-    # region = "us-east-1"
-  }
 }
 
 provider "aws" {

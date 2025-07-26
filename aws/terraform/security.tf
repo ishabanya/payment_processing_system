@@ -44,18 +44,9 @@ resource "aws_security_group" "ecs_backend" {
   name_prefix = "${local.name_prefix}-ecs-backend-"
   vpc_id      = aws_vpc.main.id
   
-  # Application port from ALB
+  # Application and health check port from ALB
   ingress {
     description     = "HTTP from ALB"
-    from_port       = 8080
-    to_port         = 8080
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-  
-  # Health check port
-  ingress {
-    description     = "Health check from ALB"
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
@@ -395,20 +386,20 @@ resource "aws_cloudwatch_log_group" "waf" {
   tags = local.common_tags
 }
 
-# WAF Logging Configuration
-resource "aws_wafv2_web_acl_logging_configuration" "main" {
-  resource_arn            = aws_wafv2_web_acl.main.arn
-  log_destination_configs = [aws_cloudwatch_log_group.waf.arn]
-  
-  redacted_fields {
-    single_header {
-      name = "authorization"
-    }
-  }
-  
-  redacted_fields {
-    single_header {
-      name = "cookie"
-    }
-  }
-} 
+# WAF Logging Configuration (temporarily disabled)
+# resource "aws_wafv2_web_acl_logging_configuration" "main" {
+#   resource_arn            = aws_wafv2_web_acl.main.arn
+#   log_destination_configs = [aws_cloudwatch_log_group.waf.arn]
+#   
+#   redacted_fields {
+#     single_header {
+#       name = "authorization"
+#     }
+#   }
+#   
+#   redacted_fields {
+#     single_header {
+#       name = "cookie"
+#     }
+#   }
+# } 

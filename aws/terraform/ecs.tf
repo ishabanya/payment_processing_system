@@ -37,7 +37,7 @@ resource "aws_lb" "main" {
 
 # ALB Target Groups
 resource "aws_lb_target_group" "backend" {
-  name        = "${local.name_prefix}-backend-tg"
+  name        = "${var.project_name}-${substr(var.environment, 0, 4)}-be-tg"
   port        = 8080
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
@@ -61,7 +61,7 @@ resource "aws_lb_target_group" "backend" {
 }
 
 resource "aws_lb_target_group" "frontend" {
-  name        = "${local.name_prefix}-frontend-tg"
+  name        = "${var.project_name}-${substr(var.environment, 0, 4)}-fe-tg"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
@@ -91,13 +91,18 @@ resource "aws_lb_listener" "main" {
   protocol          = "HTTP"
   
   default_action {
-    type = "redirect"
+    type = var.certificate_arn != "" ? "redirect" : "forward"
     
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
+    dynamic "redirect" {
+      for_each = var.certificate_arn != "" ? [1] : []
+      content {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
     }
+    
+    target_group_arn = var.certificate_arn == "" ? aws_lb_target_group.frontend.arn : null
   }
 }
 
@@ -121,6 +126,25 @@ resource "aws_lb_listener_rule" "backend_api" {
   count = var.certificate_arn != "" ? 1 : 0
   
   listener_arn = aws_lb_listener.https[0].arn
+  priority     = 100
+  
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+  
+  condition {
+    path_pattern {
+      values = ["/api/*"]
+    }
+  }
+}
+
+# HTTP Listener Rule for backend API (when no certificate)
+resource "aws_lb_listener_rule" "backend_api_http" {
+  count = var.certificate_arn == "" ? 1 : 0
+  
+  listener_arn = aws_lb_listener.main.arn
   priority     = 100
   
   action {

@@ -16,21 +16,25 @@ resource "aws_db_parameter_group" "main" {
   parameter {
     name  = "shared_preload_libraries"
     value = "pg_stat_statements"
+    apply_method = "pending-reboot"
   }
   
   parameter {
     name  = "log_statement"
     value = "all"
+    apply_method = "pending-reboot"
   }
   
   parameter {
     name  = "log_min_duration_statement"
     value = "1000"
+    apply_method = "immediate"
   }
   
   parameter {
     name  = "max_connections"
     value = "200"
+    apply_method = "pending-reboot"
   }
   
   tags = local.common_tags
@@ -40,7 +44,7 @@ resource "aws_db_parameter_group" "main" {
 resource "aws_db_instance" "main" {
   identifier     = "${local.name_prefix}-db"
   engine         = "postgres"
-  engine_version = "15.4"
+  engine_version = "15.13"
   instance_class = var.db_instance_class
   
   allocated_storage     = var.db_allocated_storage
@@ -98,6 +102,9 @@ resource "aws_db_instance" "read_replica" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   
   auto_minor_version_upgrade = true
+  
+  # Snapshot configuration
+  skip_final_snapshot = true
   
   # Enhanced monitoring
   monitoring_interval = 60
@@ -162,7 +169,7 @@ resource "aws_elasticache_subnet_group" "main" {
 
 # ElastiCache Parameter Group
 resource "aws_elasticache_parameter_group" "main" {
-  family = "redis7.x"
+  family = "redis7"
   name   = "${local.name_prefix}-redis-params"
   
   parameter {
